@@ -1,0 +1,25 @@
+# Ignore datafiles
+*.csv
+*.xlsx
+
+# Ignore output files
+*.jpeg
+*.pdf
+*.png
+
+# Ignore custom settings and local history files
+.RData
+.Rhistory
+.vscode
+
+# Ignore specific file
+mosaic_program 
+
+# Ignore Executable Files
+*.exe
+*.out
+*.app
+*.dll
+*.so
+*.o
+*.a
