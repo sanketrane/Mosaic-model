@@ -11,6 +11,7 @@
 .RData
 .Rhistory
 .vscode
+.DS_Store
 
 # Ignore specific file
 mosaic_program 
