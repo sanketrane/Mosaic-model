@@ -6,17 +6,25 @@ A fine-grained population-structured probabilistic model that tracks cohorts/clu
 
 ## Setup and Execution:
 0. Clone the directory either by direct download method or by using git clone
-1. Navigate to the directory in `Terminal`                  ## using `cd` command >> `cd path/to/your/directory`
+1. Navigate to the directory in `Terminal` <br>
+   <blocquote> Using `cd` command e.g. `cd path/to/your/directory` </blocquote>
 
-2. Compile the mosaic_program using the command `make`      ## make calls the Makefile, which assumes that your source files (c++ files here) are in the current directory
-                                                            ## and that you want to output the executable to the same directory. 
-                                                            ## åIt also assumes that you're using the g++ compiler.
+2. Compile the mosaic_program using the command `make` <br>
+   <blocquote>
+   `make` calls the Makefile, which assumes that your source files (c++ files) are in the current directory <br>
+   and that you want to output the executable to the same directory.  <br>
+   It also assumes that you're using the g++ compiler.
+   </blocquote>
+   
+   ---
+   Note:
+   `make` only re-compiles code that needs to be recompiled.      ## checks for modifications to source files and only re-compiles modified files.
 
-Note:
-`make` only re-compiles code that needs to be recompiled.      ## checks for modifications to source files and only re-compiles modified files
- **Every time changes are made to source C++ files, program needs to be re-compiled by running `make` again before updated version of the program can be exceuted.**
+   **Every time changes are made to source C++ files, program needs to be re-compiled by running `make` again before updated version of the program can be exceuted.**
 
-3. If there are no compilation errors, this will produce an executable file mosaic_program
+   ---
+
+4. If there are no compilation errors, this will produce an executable file mosaic_program
     run the program by typing `./mosaic_program`
 
 
