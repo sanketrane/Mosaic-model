@@ -1,4 +1,4 @@
-#include "procedural_functions.h"
+#include "header_files/procedural_functions.h"
 
 // Declarations and descriptions in the header file
 double thyNtregSize(double Time)

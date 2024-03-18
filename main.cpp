@@ -6,11 +6,11 @@
 #include <cmath>
 
 // header files
-#include "Agebin.h"
-#include "Subpop.h"
-#include "accessory_functions.h"
-#include "procedural_functions.h"
-#include "doSim_functions.h"
+#include "header_files/Agebin.h"
+#include "header_files/Subpop.h"
+#include "header_files/accessory_functions.h"
+#include "header_files/procedural_functions.h"
+#include "header_files/doSim_functions.h"
 
 int main()
 {

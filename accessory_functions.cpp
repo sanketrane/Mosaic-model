@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
-#include "Subpop.h"
+#include "header_files/Subpop.h"
 
 // look for the function descriptions in the header file
 

@@ -1,7 +1,7 @@
 // Purpose: Implementation of the Subpop class.
 
 // header file
-#include "Subpop.h"
+#include "header_files/Subpop.h"
 
 // member functions of the Subpop class
 
