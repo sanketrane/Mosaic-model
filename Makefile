@@ -7,7 +7,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -std=c++2a
 
 # Source files
-SRCS = main.cpp Subpop.cpp accessory_functions.cpp procedural_functions.cpp doSim_functions.cpp
+SRCS = $(wildcard src_files/*.cpp)
 
 # Output executable
 OUT = mosaic_program
