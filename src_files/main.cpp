@@ -14,7 +14,7 @@
 
 int main()
 {
-    [[maybe_unused]] int cloneUniverse{100000}; // total number of clone IDs to draw data from 1 million
+    [[maybe_unused]] int cloneUniverse{100}; // total number of clone IDs to draw data from 1 million
     double tFin{450.0};
     double t0{5.0};
     double tStep{0.1};
@@ -57,26 +57,22 @@ int main()
         A.push_back(Agebin(50 - i, b0v, b0k, b1v, b1k, b2v, b2k, b3v, b3k));
     }
 
-    // Open (or create) a CSV file in write mode
-    std::ofstream countresfile("output_files/CountsResults.csv");
-    countresfile << "Time, Agebin, Total_nai_dis, Total_nai_inc, Total_mem_fast, Total_mem_slow \n";
-    std::ofstream kiresfile("output_files/KiResults.csv");
-    kiresfile << "Time, Agebin, Kifrac_nai_dis, Kifrac_nai_inc, Kifrac_mem_fast, Kifrac_mem_slow \n";
+    // remove the file if it exists
+    std::remove("output_files/Results.csv");
+    std::remove("output_files/cloneFreq.csv");
 
-    std::ofstream nai_disfile("output_files/nai_disFreq.csv");
-    nai_disfile << "Time, Agebin, Clone ID, Frequency \n";
-    std::ofstream nai_incfile("output_files/nai_incFreq.csv");
-    nai_incfile << "Time, Agebin, Clone ID, Frequency \n";
-    std::ofstream mem_fastfile("output_files/mem_fastFreq.csv");
-    mem_fastfile << "Time, Agebin, Clone ID, Frequency \n";
-    std::ofstream mem_slowfile("output_files/mem_slowFreq.csv");
-    mem_slowfile << "Time, Agebin, Clone ID, Frequency \n";
+    // Open (or create) a CSV file in write mode
+    std::ofstream resfile("output_files/Results.csv");
+    resfile << "Time, Agebin, Total_nai_dis, Total_nai_inc, Total_mem_fast, Total_mem_slow, Kifrac_nai_dis, Kifrac_nai_inc, Kifrac_mem_fast, Kifrac_mem_slow \n";
+
+    std::ofstream cloneFreqfile("output_files/cloneFreq.csv");
+    cloneFreqfile << "Time, Agebin, Clone ID, seq_nai_dis, seq_nai_inc, seq_mem_fast, seq_mem_slow \n";
 
     for (std::vector<Agebin>::size_type i = 0; i < A.size(); i++) // for (auto i = 0u; i < A.size(); i++) this works as well
     {
         // intial conditions to CSV
-        writeResultsToCSV(A.at(i), 5, countresfile, kiresfile);                                // counts and Ki67 fractions
-        writeCloneFreqToCSV(A.at(i), 5, nai_disfile, nai_incfile, mem_fastfile, mem_slowfile); // clone frequencies
+        writeResultsToCSV(A.at(i), 5, resfile);         // counts and Ki67 fractions
+        writeCloneFreqToCSV(A.at(i), 5, cloneFreqfile); // clone frequencies
     }
 
     // step counter intiatied at 50 since we have already initialized 50 agebins
@@ -107,25 +103,21 @@ int main()
             if (x % 70 == 0) // number of steps 70 == 7 days, since each step is 0.1 days
             {
                 // write the results to a CSV file every 7 days
-                writeResultsToCSV(A.at(i), currentTime, countresfile, kiresfile);
+                writeResultsToCSV(A.at(i), currentTime, resfile);
             }
 
-            if (x % 300 == 0) // number of steps 300 == 30 days, since each step is 0.1 days
+            if (x % 900 == 0) // number of steps 900 == 90 days, since each step is 0.1 days
             {
                 // write the clone frequencies to a CSV file every 30 days
-                writeCloneFreqToCSV(A.at(i), currentTime, nai_disfile, nai_incfile, mem_fastfile, mem_slowfile);
+                writeCloneFreqToCSV(A.at(i), currentTime, cloneFreqfile);
             }
         }
         // add a new agebin of cells of age 0
         A.push_back(Agebin(0, b0vNu, b0kNu));
     }
 
-    nai_disfile.close();
-    nai_incfile.close();
-    mem_fastfile.close();
-    mem_slowfile.close();
-    countresfile.close();
-    kiresfile.close();
+    cloneFreqfile.close();
+    resfile.close();
 
     std::cout << "Simulation complete\n";
 

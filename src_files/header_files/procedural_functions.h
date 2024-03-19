@@ -5,7 +5,7 @@
 
 // include statements
 #include <iostream>
-#include <unordered_map>
+#include <map>
 #include <fstream>
 #include <vector>
 #include <random>
@@ -50,14 +50,14 @@ std::vector<int> samplerNfromVector(std::vector<int> &fromvec, std::vector<int> 
  * @param time_now The current time.
  * @param resfile The output file stream to write the results to.
  */
-void writeResultsToCSV(Agebin &agebin, double time_now, std::ofstream &countsresfile, std::ofstream &kiresfile);
+void writeResultsToCSV(Agebin &agebin, double time_now, std::ofstream &resfile);
 
 /**
  * Calculates the frequency of each clone ID in the given Subpop object and writes the results to a CSV file.
  *
  * @param subpop The Subpop object containing the clone IDs.
  */
-std::unordered_map<int, int> getSubpopCloneFreq(Subpop &subpop); // forward declaration
+std::map<int, int> getSubpopCloneFreq(Subpop &subpop); // forward declaration
 
 /**
  * Writes clone frequencies within a subpop to a CSV file.
@@ -72,7 +72,8 @@ std::unordered_map<int, int> getSubpopCloneFreq(Subpop &subpop); // forward decl
  * @param naifile The output file stream for the NAI (Normalized Age Index) data.
  * @param memfile The output file stream for the memory data.
  */
-void writeCloneFreqToCSV(Agebin &agebin, double time_now, std::ofstream &nai_disfile, std::ofstream &nai_incfile, std::ofstream &mem_fastfile, std::ofstream &mem_slowfile);
+
+void writeCloneFreqToCSV(Agebin &agebin, double time_now, std::ofstream &cloneFreqfile);
 
 /**
  * Calculates the difference between two vectors.

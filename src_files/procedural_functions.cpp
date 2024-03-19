@@ -24,28 +24,19 @@ std::vector<int> samplerNfromVector(std::vector<int> &fromvec, std::vector<int> 
 }
 
 // Aggregate functions
-void writeResultsToCSV(Agebin &agebin, double time_now, std::ofstream &countsresfile, std::ofstream &kiresfile)
+void writeResultsToCSV(Agebin &agebin, double time_now, std::ofstream &resfile)
 {
-    if (countsresfile.is_open())
+    if (resfile.is_open())
     {
-        countsresfile << time_now << ", " << agebin.getAgebinID()
-                      << ", " << agebin.getB0().getNumCells()
-                      << ", " << agebin.getB1().getNumCells()
-                      << ", " << agebin.getB2().getNumCells()
-                      << ", " << agebin.getB3().getNumCells() << '\n';
-    }
-    else
-    {
-        std::cerr << "Error: File not open\n";
-    }
-
-    if (kiresfile.is_open())
-    {
-        kiresfile << time_now << ", " << agebin.getAgebinID()
-                  << ", " << agebin.getB0().getKifrac()
-                  << ", " << agebin.getB1().getKifrac()
-                  << ", " << agebin.getB2().getKifrac()
-                  << ", " << agebin.getB3().getKifrac() << '\n';
+        resfile << time_now << ", " << agebin.getAgebinID()
+                << ", " << agebin.getB0().getNumCells()
+                << ", " << agebin.getB1().getNumCells()
+                << ", " << agebin.getB2().getNumCells()
+                << ", " << agebin.getB3().getNumCells()
+                << ", " << agebin.getB0().getKifrac()
+                << ", " << agebin.getB1().getKifrac()
+                << ", " << agebin.getB2().getKifrac()
+                << ", " << agebin.getB3().getKifrac() << '\n';
     }
     else
     {
@@ -54,16 +45,16 @@ void writeResultsToCSV(Agebin &agebin, double time_now, std::ofstream &countsres
 }
 
 /**
- * Calculates the frequency of each clone ID in the given Subpop object and writes the results to a CSV file.
+ * Calculates the frequency of each clone ID in the given Subpop object
  *
  * @param subpop The Subpop object containing the clone IDs.
  */
-std::unordered_map<int, int> getSubpopCloneFreq(Subpop &subpop)
+std::map<int, int> getSubpopCloneFreq(Subpop &subpop)
 {
     std::vector<int> cloneIDvec{subpop.getCloneIDvec()};
 
     // Create an unordered_map to count frequencies
-    std::unordered_map<int, int> freq;
+    std::map<int, int> freq;
 
     // Count the frequencies
     for (int num : cloneIDvec)
@@ -74,60 +65,57 @@ std::unordered_map<int, int> getSubpopCloneFreq(Subpop &subpop)
     return freq;
 }
 
-void writeCloneFreqToCSV(Agebin &agebin, double time_now, std::ofstream &nai_disfile, std::ofstream &nai_incfile, std::ofstream &mem_fastfile, std::ofstream &mem_slowfile)
+void writeCloneFreqToCSV(Agebin &agebin, double time_now, std::ofstream &cloneFreqfile)
 {
-    std::unordered_map<int, int> nai_disFreq{getSubpopCloneFreq(agebin.getB0())};
-    std::unordered_map<int, int> nai_incFreq{getSubpopCloneFreq(agebin.getB1())};
-    std::unordered_map<int, int> mem_fastFreq{getSubpopCloneFreq(agebin.getB2())};
-    std::unordered_map<int, int> mem_slowFreq{getSubpopCloneFreq(agebin.getB3())};
 
-    if (nai_disfile.is_open())
+    std::map<int, int> nai_disFreq{getSubpopCloneFreq(agebin.getB0())};
+    std::map<int, int> nai_incFreq{getSubpopCloneFreq(agebin.getB1())};
+    std::map<int, int> mem_fastFreq{getSubpopCloneFreq(agebin.getB2())};
+    std::map<int, int> mem_slowFreq{getSubpopCloneFreq(agebin.getB3())};
+
+    // create a joined table
+    std::map<int, std::tuple<int, int, int, int>> joined_table;
+
+    // add elements from nai_disFreq to the joined table
+    for (const auto &row : nai_disFreq)
     {
-        for (auto &pair : nai_disFreq)
+        std::get<0>(joined_table[row.first]) = row.second;
+    }
+
+    // add elements from nai_incFreq to the joined table
+    for (const auto &row : nai_incFreq)
+    {
+        std::get<1>(joined_table[row.first]) = row.second;
+    }
+
+    // add elements from mem_fastFreq to the joined table
+    for (const auto &row : mem_fastFreq)
+    {
+        std::get<2>(joined_table[row.first]) = row.second;
+    }
+
+    // add elements from mem_slowFreq to the joined table
+    for (const auto &row : mem_slowFreq)
+    {
+        std::get<3>(joined_table[row.first]) = row.second;
+    }
+
+    // sort the joined table by key
+    std::map<int, std::tuple<int, int, int, int>> sorted_joined_table(joined_table.begin(), joined_table.end());
+
+    // write the joined table to a CSV file
+    if (cloneFreqfile.is_open())
+    {
+        for (const auto &row : sorted_joined_table)
         {
-            nai_disfile << time_now << ", " << agebin.getAgebinID() << ", " << pair.first << ", " << pair.second << '\n';
+            cloneFreqfile << time_now << ", " << agebin.getAgebinID() << ", " << row.first << ", " << std::get<0>(row.second) << ", " << std::get<1>(row.second) << ", " << std::get<2>(row.second) << ", " << std::get<3>(row.second) << '\n';
         }
     }
     else
     {
         std::cerr << "Error: File not open\n";
     }
-
-    if (nai_incfile.is_open())
-    {
-        for (auto &pair : nai_incFreq)
-        {
-            nai_incfile << time_now << ", " << agebin.getAgebinID() << ", " << pair.first << ", " << pair.second << '\n';
-        }
-    }
-    else
-    {
-        std::cerr << "Error: File not open\n";
-    }
-
-    if (mem_fastfile.is_open())
-    {
-        for (auto &pair : mem_fastFreq)
-        {
-            mem_fastfile << time_now << ", " << agebin.getAgebinID() << ", " << pair.first << ", " << pair.second << '\n';
-        }
-    }
-    else
-    {
-        std::cerr << "Error: File not open\n";
-    }
-
-    if (mem_slowfile.is_open())
-    {
-        for (auto &pair : mem_slowFreq)
-        {
-            mem_slowfile << time_now << ", " << agebin.getAgebinID() << ", " << pair.first << ", " << pair.second << '\n';
-        }
-    }
-    else
-    {
-        std::cerr << "Error: File not open\n";
-    }
+    return;
 }
 
 std::vector<int> differenceOfVectors(std::vector<int> &vec1, std::vector<int> &vec2)

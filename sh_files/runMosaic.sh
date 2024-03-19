@@ -8,7 +8,6 @@ start=$(date +%s)
 
 # Run the Mosaic program and get the memory usage
 /usr/bin/time -v ./mosaic_program 2>&1 | tee mosaic_output.txt
-./mosaic_program
 
 # End the timer
 end=$(date +%s)
