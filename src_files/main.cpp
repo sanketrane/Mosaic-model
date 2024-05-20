@@ -14,10 +14,10 @@
 
 int main()
 {
-    [[maybe_unused]] int cloneUniverse{100}; // total number of clone IDs to draw data from 1 million
-    double tFin{450.0};
+    [[maybe_unused]] int cloneUniverse{1000}; // total number of clone IDs to draw data from 1 million
+    double tFin{300.0};
     double t0{5.0};
-    double tStep{0.1};
+    double tStep{0.5};
     [[maybe_unused]] int NumAgebins_t0 = static_cast<int>(t0 / tStep);
 
     // define input params -- based on model fits
@@ -75,8 +75,8 @@ int main()
         writeCloneFreqToCSV(A.at(i), 5, cloneFreqfile); // clone frequencies
     }
 
-    // step counter intiatied at 50 since we have already initialized 50 agebins
-    int x = 50;
+    // step counter intiated at 50 since we have already initialized 50 agebins
+    int x = 10;
 
     // main loop -- iterating over time
     for (double currentTime = t0 + tStep; currentTime < tFin; currentTime += tStep)
@@ -89,7 +89,7 @@ int main()
         int b0kNu = thynaiInflux * fraction;
 
         x++; // step counter
-        if (x % 100 == 0)
+        if (x % 10 == 0)
         {
             std::cout << "Time: " << currentTime << " Step: " << x << '\n';
         }
@@ -100,7 +100,7 @@ int main()
             // update the agebins at every step
             doAgebin(A.at(i), par_vec);
 
-            if (x % 70 == 0) // number of steps 70 == 7 days, since each step is 0.1 days
+            if (x % 2 == 0) // number of steps 70 == 7 days, since each step is 0.1 days
             {
                 // write the results to a CSV file every 7 days
                 writeResultsToCSV(A.at(i), currentTime, resfile);

@@ -84,18 +84,19 @@ void doSubpop(Subpop &subpop, std::vector<double> &par_vec, Subpop *precursor1 =
         clone_persist_div_inflx.insert(clone_persist_div_inflx.end(), precursor1->getCloneEgress().begin(), precursor1->getCloneEgress().end());
         num_NewKi67pos += precursor1->getNumKi67Egress();
 
-        if (subpop.getCellType() == Subpop::CellType::nai_dis)
-        {
-            std::cout << "Influx from thy_Ntreg: " << precursor1->getCloneEgress().size()
-                      << " current clone_persist_div_inflx size: " << clone_persist_div_inflx.size()
-                      << '\n';
-        }
+        // std::cout << "subset: " << subpop.getCellType() << " Influx: " << precursor1->getCloneEgress().size()
+        //           << " current clone_persist_div_inflx size: " << clone_persist_div_inflx.size()
+        //           << '\n';
     }
     else if (precursor1 != nullptr && precursor2 != nullptr)
     {
         clone_persist_div_inflx.insert(clone_persist_div_inflx.end(), precursor1->getCloneEgress().begin(), precursor1->getCloneEgress().end());
         clone_persist_div_inflx.insert(clone_persist_div_inflx.end(), precursor2->getCloneEgress().begin(), precursor2->getCloneEgress().end());
         num_NewKi67pos += precursor1->getNumKi67Egress() + precursor2->getNumKi67Egress();
+
+        // std::cout << "subset: " << subpop.getCellType() << " Influx: " << precursor1->getCloneEgress().size()
+        //           << " current clone_persist_div_inflx size: " << clone_persist_div_inflx.size()
+        //           << '\n';
     }
 
     // update the subpop object
