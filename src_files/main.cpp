@@ -4,6 +4,16 @@
 #include <unordered_map>
 #include <fstream>
 #include <cmath>
+#include <thread>
+#include <cstdlib> 
+#include <string>
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include <tbb/concurrent_vector.h>
+#include <tbb/info.h>
+#include <tbb/parallel_for.h>
+#include <tbb/task_arena.h>
+#include <tbb/global_control.h>
 
 // header files
 #include "header_files/Agebin.h"
@@ -12,26 +22,28 @@
 #include "header_files/procedural_functions.h"
 #include "header_files/doSim_functions.h"
 
-int main()
-{
-    [[maybe_unused]] int cloneUniverse{100}; // total number of clone IDs to draw data from 1 million
-    double tFin{450.0};
-    double t0{5.0};
-    double tStep{0.1};
-    [[maybe_unused]] int NumAgebins_t0 = static_cast<int>(t0 / tStep);
+int main(int argc, char* argv[])
+{   
+    int cloneUniverse{100}; // total number of clone IDs to draw data from 1 million
+    double tFin = std::atof(argv[1]);
+    double t0 = std::atof(argv[2]);
+    double tStep = std::atof(argv[3]);
+    double kilossrate = std::atof(argv[4]);
+    double thyinfluxrate = std::atof(argv[5]);
+    std::string resfilePath = argv[6];
+    int agg_count_t = std::atof(argv[7]) / tStep;
+    std::string cloneFreqfilePath = argv[8];
+    int agg_freq_t = std::atof(argv[9]) / tStep;
 
-    // define input params -- based on model fits
-    double kilossrate{0.23};   // rate of loss of Ki67 on T cells
-    double thyinfluxrate{0.4}; // rate of influx of naive Tregs from thymus to peripheral naive Treg pool
+    int NumAgebins_t0 = static_cast<int>(t0 / tStep);
 
     // array of parameters
     std::vector<double> par_vec{tStep, kilossrate};
-
     // vector of Agebin objects -- increases in size by 1 at each timestep
-    std::vector<Agebin> A; //
+    tbb::concurrent_vector<Agebin> A;
 
     // initialize the agebin objects at t0 -- 50 agebins since tStep = 0.1 (Number of agebins = t/tStep)
-    for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < NumAgebins_t0; ++i)
     {
         // initialize the agebins
         // initial number of cells in each subset are based on data
@@ -54,25 +66,25 @@ int main()
         int b2k{90 + rand() % (120 - 90 + 1)}; // random number between 120 and 180
         int b3k{30 + rand() % (45 - 30 + 1)};  // random number between 120 and 180
 
-        A.push_back(Agebin(50 - i, b0v, b0k, b1v, b1k, b2v, b2k, b3v, b3k));
+        A.push_back(Agebin(NumAgebins_t0 - i, b0v, b0k, b1v, b1k, b2v, b2k, b3v, b3k));
     }
-
+    
     // remove the file if it exists
-    std::remove("output_files/Results.csv");
-    std::remove("output_files/cloneFreq.csv");
+    // std::remove(resfilePath);
+    // std::remove(cloneFreqfilePath);
 
-    // Open (or create) a CSV file in write mode
-    std::ofstream resfile("output_files/Results.csv");
+    std::ofstream resfile(resfilePath);
     resfile << "Time, Agebin, Total_nai_dis, Total_nai_inc, Total_mem_fast, Total_mem_slow, Kifrac_nai_dis, Kifrac_nai_inc, Kifrac_mem_fast, Kifrac_mem_slow \n";
 
-    std::ofstream cloneFreqfile("output_files/cloneFreq.csv");
+    // std::ofstream cloneFreqfile("output_files/cloneFreq1.csv");
+    std::ofstream cloneFreqfile(cloneFreqfilePath);
     cloneFreqfile << "Time, Agebin, Clone ID, seq_nai_dis, seq_nai_inc, seq_mem_fast, seq_mem_slow \n";
 
-    for (std::vector<Agebin>::size_type i = 0; i < A.size(); i++) // for (auto i = 0u; i < A.size(); i++) this works as well
+    for (int i = 0; i < A.size(); i++)
     {
         // intial conditions to CSV
-        writeResultsToCSV(A.at(i), 5, resfile);         // counts and Ki67 fractions
-        writeCloneFreqToCSV(A.at(i), 5, cloneFreqfile); // clone frequencies
+        writeResultsToCSV(A.at(i), t0, resfile);         // counts and Ki67 fractions
+        writeCloneFreqToCSV(A.at(i), t0, cloneFreqfile); // clone frequencies
     }
 
     // step counter intiatied at 50 since we have already initialized 50 agebins
@@ -94,25 +106,32 @@ int main()
             std::cout << "Time: " << currentTime << " Step: " << x << '\n';
         }
 
-        // second loop -- iterating over agebins
-        for (auto i = 0u; i < A.size(); i++)
-        {
-            // update the agebins at every step
-            doAgebin(A.at(i), par_vec);
+        // // second loop -- iterating over agebins
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, A.size()),
+            [&](const tbb::blocked_range<size_t>& r) {
+                for (size_t i = r.begin(); i != r.end(); ++i) {
+                    // update the agebins at every step
+                    doAgebin(A[i], par_vec);
+                }
+            }
+            // tbb::simple_partitioner()
+        );
 
-            if (x % 70 == 0) // number of steps 70 == 7 days, since each step is 0.1 days
-            {
-                // write the results to a CSV file every 7 days
-                writeResultsToCSV(A.at(i), currentTime, resfile);
+        if (x % agg_count_t == 0) // number of steps 70 == 7 days, since each step is 0.1 days
+        {
+            for(int i = 0; i < A.size(); i++){
+                writeResultsToCSV(A[i], currentTime, resfile);
             }
 
-            if (x % 900 == 0) // number of steps 900 == 90 days, since each step is 0.1 days
-            {
-                // write the clone frequencies to a CSV file every 30 days
-                writeCloneFreqToCSV(A.at(i), currentTime, cloneFreqfile);
+        }
+
+        if (x % agg_freq_t == 0) // number of steps 900 == 90 days, since each step is 0.1 days
+        {
+            for(int i = 0; i < A.size(); i++){
+                writeCloneFreqToCSV(A[i], currentTime, cloneFreqfile);
             }
         }
-        // add a new agebin of cells of age 0
+
         A.push_back(Agebin(0, b0vNu, b0kNu));
     }
 
