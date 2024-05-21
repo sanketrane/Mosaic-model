@@ -68,6 +68,7 @@ std::map<int, int> getSubpopCloneFreq(Subpop &subpop)
 void writeCloneFreqToCSV(Agebin &agebin, double time_now, std::ofstream &cloneFreqfile)
 {
 
+    //std::map<int, int> nai_disFreq, nai_incFreq, mem_fastFreq, mem_slowFreq;
     std::map<int, int> nai_disFreq{getSubpopCloneFreq(agebin.getB0())};
     std::map<int, int> nai_incFreq{getSubpopCloneFreq(agebin.getB1())};
     std::map<int, int> mem_fastFreq{getSubpopCloneFreq(agebin.getB2())};
