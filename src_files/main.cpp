@@ -22,6 +22,7 @@
 #include "header_files/procedural_functions.h"
 #include "header_files/doSim_functions.h"
 
+
 int main(int argc, char* argv[])
 {   
     int cloneUniverse{100}; // total number of clone IDs to draw data from 1 million
@@ -87,8 +88,8 @@ int main(int argc, char* argv[])
         writeCloneFreqToCSV(A.at(i), t0, cloneFreqfile); // clone frequencies
     }
 
-    // step counter intiatied at 50 since we have already initialized 50 agebins
-    int x = 50;
+    // step counter intiated at 50 since we have already initialized 50 agebins
+    int x = 10;
 
     // main loop -- iterating over time
     for (double currentTime = t0 + tStep; currentTime < tFin; currentTime += tStep)
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
         int b0kNu = thynaiInflux * fraction;
 
         x++; // step counter
-        if (x % 100 == 0)
+        if (x % 10 == 0)
         {
             std::cout << "Time: " << currentTime << " Step: " << x << '\n';
         }
@@ -117,10 +118,12 @@ int main(int argc, char* argv[])
             // tbb::simple_partitioner()
         );
 
+
         if (x % agg_count_t == 0) // number of steps 70 == 7 days, since each step is 0.1 days
         {
             for(int i = 0; i < A.size(); i++){
                 writeResultsToCSV(A[i], currentTime, resfile);
+
             }
 
         }

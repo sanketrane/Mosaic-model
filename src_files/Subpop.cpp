@@ -51,7 +51,7 @@ double Subpop::divrate()
     case Subpop::CellType::nai_dis:
         return 0.017;
     case Subpop::CellType::nai_inc:
-        return 0.061;
+        return 0.062;
     case Subpop::CellType::mem_fast:
         return 0.15;
     case Subpop::CellType::mem_slow:
@@ -70,9 +70,9 @@ double Subpop::egressrate()
     switch (getCellType())
     {
     case Subpop::CellType::nai_dis:
-        return 0.01;
+        return 0.001;
     case Subpop::CellType::nai_inc:
-        return 0.01;
+        return 0.001;
     case Subpop::CellType::mem_fast:
         return 0.23;
     case Subpop::CellType::mem_slow:
