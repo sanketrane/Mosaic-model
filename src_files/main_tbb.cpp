@@ -6,6 +6,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include <tbb/concurrent_vector.h>
 #include <cxxopts.hpp>
 
 // header files
@@ -26,16 +29,15 @@ int main(int argc, char *argv[])
         format: ("name (oprtional short name separated by a comma)", "description", cxxopts::value<type>())
         if the third argument is not provided, the value is assumed to be a boolean value
          */
-        ("tFin", "Final time of simulation", cxxopts::value<double>())                                                //
-        ("tInit", "Initial time of simulation", cxxopts::value<double>())                                             //
-        ("tStep", "Time step of simulation", cxxopts::value<double>())                                                //
-        ("cloneUniverse", "Total number of clone IDs to consider", cxxopts::value<int>())                             //
-        ("kilossrate", "Parameter in the model -- Rate of Ki67 loss", cxxopts::value<double>())                       //
-        ("thyinfluxrate", "parameter in the model -- Rate of thymic naive influx", cxxopts::value<double>())          //
-        ("resfilePath", "Path to the results file", cxxopts::value<std::string>())                                    //
-        ("writeRes_counter", "FIXME: what is this parameter?", cxxopts::value<int>())                                 //
-        ("cloneFreqfilePath", "Path to the clone frequency file", cxxopts::value<std::string>())                      //
-        ("writeClonefreq_counter", "FIXME: what is this parameter?", cxxopts::value<int>())("h,help", "Print usage"); //
+        ("tFin", "Final time of simulation", cxxopts::value<double>())                                                        //
+        ("tInit", "Initial time of simulation", cxxopts::value<double>())                                                     //
+        ("tStep", "Time step of simulation", cxxopts::value<double>()->default_value("0.04"))                                 // defaults to timestep of 0.04 days ~= 1 hour
+        ("cloneUniverse", "Total number of clone IDs to consider", cxxopts::value<int>())                                     //
+        ("kilossrate", "Parameter in the model -- Rate of Ki67 loss", cxxopts::value<double>())                               //
+        ("thyinfluxrate", "parameter in the model -- Rate of thymic naive influx", cxxopts::value<double>())                  //
+        ("resfilePath", "Path to the results file", cxxopts::value<std::string>()->default_value("output_files/Results.csv")) //
+        ("writeRes_counter", "step counter for main results output", cxxopts::value<int>())                                   //
+        ("h,help", "Print usage");                                                                                            //
 
     auto inputArgs = options.parse(argc, argv);
 
@@ -53,17 +55,16 @@ int main(int argc, char *argv[])
     double thyinfluxrate = inputArgs["thyinfluxrate"].as<double>();
     std::string resfilePath = inputArgs["resfilePath"].as<std::string>();
     int writeRes_counter = inputArgs["writeRes_counter"].as<int>();
-    std::string cloneFreqfilePath = inputArgs["cloneFreqfilePath"].as<std::string>();
-    int writeClonefreq_counter = inputArgs["writeClonefreq_counter"].as<int>();
 
     // intial number of the mosaic classes -- here cell age based bins
     int NumAgebins_tInit = static_cast<int>(tInit / tStep);
+    std::cout << "NumAgebins_tInit: " << NumAgebins_tInit << '\n';
 
     // array of parameters (fixed) to be passed to the "do" functions
     std::vector<double> par_vec{tStep, kilossrate};
 
     // vector of Agebin objects -- increases in size by 1 at each timestep
-    std::vector<Agebin> A;
+    tbb::concurrent_vector<Agebin> A;
 
     // initialize the agebin objects at tInit
     for (size_t i = 0; i < A.size(); i++)
@@ -93,23 +94,17 @@ int main(int argc, char *argv[])
     }
 
     // remove the output files if they exists
-    // std::remove(resfilePath);
-    // std::remove(cloneFreqfilePath);
+    std::remove(resfilePath.c_str());
 
+    // open the output files
     std::ofstream resfile(resfilePath);
     // write the header to the results file
     resfile << "Time, Agebin, Total_nai_dis, Total_nai_inc, Total_mem_fast, Total_mem_slow, Kifrac_nai_dis, Kifrac_nai_inc, Kifrac_mem_fast, Kifrac_mem_slow \n";
 
-    // std::ofstream cloneFreqfile("output_files/cloneFreq1.csv");
-    std::ofstream cloneFreqfile(cloneFreqfilePath);
-    // write the header to the clone frequency file
-    cloneFreqfile << "Time, Agebin, Clone ID, seq_nai_dis, seq_nai_inc, seq_mem_fast, seq_mem_slow \n";
-
     for (size_t i = 0; i < A.size(); i++) // A.size returns a variable of type size_t which is an unsigned integer type; i needs to match
     {
         // write the initial values to the output files
-        writeResultsToCSV(A.at(i), tInit, resfile);         // counts and Ki67 fractions
-        writeCloneFreqToCSV(A.at(i), tInit, cloneFreqfile); // clone frequencies
+        writeResultsToCSV(A.at(i), tInit, resfile);
     }
 
     // step counter intiated at NumAgebins_tInit since we have already initialized NumAgebins_tInit agebins and we want to make sure number of steps is consistent with the number of agebins
@@ -130,18 +125,25 @@ int main(int argc, char *argv[])
         int b0kNu = numThyInflux * fraction;
 
         x++; // step counter
-        int stepPrint = static_cast<int>(tFin / 10.0);
+        int stepPrint = static_cast<int>(tFin / (10.0 * tStep));
+        // std::cout << "stepPrint: " << stepPrint << "\n";
         if (x % stepPrint == 0)
         {
             std::cout << "Time: " << currentTime << " Step: " << x << '\n';
         }
 
-        // second loop -- iterating over agebins
-        for (auto i = 0u; i < A.size(); i++)
-        {
-            // update the agebins at every step
-            doAgebin(A.at(i), par_vec);
-        }
+        // // second loop -- iterating over agebins
+        tbb::parallel_for(tbb::blocked_range<size_t>(0, A.size()),
+                          [&](const tbb::blocked_range<size_t> &r)
+                          {
+                              for (size_t i = r.begin(); i != r.end(); ++i)
+                              {
+                                  // update the agebins at every step
+                                  doAgebin(A[i], par_vec);
+                              }
+                          }
+                          // tbb::simple_partitioner()
+        );
 
         if (x % writeRes_counter == 0)
         {
@@ -151,18 +153,9 @@ int main(int argc, char *argv[])
             }
         }
 
-        if (x % writeClonefreq_counter == 0) // number of steps 900 == 90 days, since each step is 0.1 days
-        {
-            for (size_t i = 0; i < A.size(); i++)
-            {
-                writeCloneFreqToCSV(A[i], currentTime, cloneFreqfile);
-            }
-        }
-
         A.push_back(Agebin(0, b0vNu, b0kNu));
     }
 
-    cloneFreqfile.close();
     resfile.close();
 
     std::cout << "Simulation complete\n";

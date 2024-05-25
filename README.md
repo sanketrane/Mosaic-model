@@ -18,6 +18,7 @@ Follow these steps to setup and execute the MoSAIC model:
 
 4. **Run the program**: If there are no compilation errors, this will produce an executable file `mosaic_program`. Run the program by typing `./mosaic_program`.
 
-## Authors
+## Contributors
 
-* **Sanket Rane** - *Initial work* - [sanketrane](https://github.com/sanketrane)
+* **Sanket Rane** - *Concept, model and code development* - [sanketrane](https://github.com/sanketrane)
+* **Jun Won Park** - *Parallelization and optimization routines* - [Jun Won (Lakon) Park](https://github.com/jp4474)
